@@ -1,0 +1,5 @@
+{
+  "name": "PixelQuest: Retro Narrative Console",
+  "description": "A retro text-adventure engine powered by Gemini, featuring AI-generated 1-bit pixel art and branching storylines.",
+  "requestFramePermissions": []
+}
