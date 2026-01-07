@@ -1,7 +1,7 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
 import { GameState, Theme, StoryNode, Choice } from './types';
-import { fetchStoryNode, generateSceneImage } from './geminiService';
+import { fetchStoryNode, generateSceneImage } from './apiClient';
 import Screen from './components/Screen';
 import Controls from './components/Controls';
 
@@ -123,10 +123,6 @@ const App: React.FC = () => {
       setState(prev => ({ ...prev, isRolling: true, currentRoll: null }));
       await new Promise(r => setTimeout(r, 1500));
       rollResult = Math.floor(Math.random() * 5) + 1;
-      
-      if (rollResult === 1) {
-        localHealth -= 1;
-      }
     }
 
     setState(prev => ({ ...prev, isRolling: false, isLoading: true, currentRoll: rollResult, health: localHealth }));
@@ -220,7 +216,7 @@ const App: React.FC = () => {
           PIXEL QUEST
         </h1>
         <p className="text-green-500 font-mono mt-1 tracking-widest text-sm md:text-lg opacity-60 uppercase">
-          Narrative Engine v4.6.0 // Advanced Inventory Active
+          Narrative Engine v1.0.0
         </p>
 
         {saveStatus && (
@@ -233,7 +229,7 @@ const App: React.FC = () => {
       <div className={`w-full max-w-4xl p-3 md:p-8 rounded-xl md:rounded-2xl shadow-2xl border-b-4 md:border-b-8 border-r-4 md:border-r-8 transition-colors duration-500 ${isGameOver ? 'bg-red-900/20 border-red-900' : 'bg-zinc-800 border-black'}`}>
         
         {!state.currentScene && !state.isLoading && (
-          <div className="flex flex-col gap-8">
+          <div className="flex flex-col gap-8 mb-12">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
               <div className="col-span-full text-zinc-400 font-mono mb-2 text-center text-lg md:text-xl uppercase">
                 -- NOUVELLE AVENTURE --
