@@ -1,4 +1,4 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI, Type, HarmCategory, HarmBlockThreshold } from "@google/genai";
 import { getSceneFromDB, saveSceneToDB, getImageFromDB, saveImageToDB } from "./database";
 import dotenv from 'dotenv';
 import sharp from "sharp";
@@ -6,6 +6,13 @@ import sharp from "sharp";
 dotenv.config();
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || "" });
+
+const safetySettings = [
+  { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
+  { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
+  { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
+  { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
+];
 
 const SYSTEM_INSTRUCTION = `Tu es le moteur narratif d'une console de jeu rétro.
 RÈGLE ABSOLUE : Réponds UNIQUEMENT en JSON valide.
@@ -22,7 +29,10 @@ INVENTAIRE ET OBJETS :
 
 MÉCANIQUE DE ROLL (1-5) :
 - 1: Échec / Dégâts.
-- 5: Succès critique.
+- 2: Échec partiel / Complications, léger risque de perdre un cœur.
+- 3: Neutre / Avance sans gain ni perte.
+- 4: Succès.
+- 5: Succès critique / Gain d'objet ou soin possible.
 
 Structure JSON :
 {
@@ -43,12 +53,18 @@ Structure JSON :
 
 // Helper pour générer la clé de cache (identique à ton frontend actuel)
 const generateCacheKey = (theme: string, history: string, prompt: string, roll: number | null, inventory: string[], usedItem: string | null, hp: number) => {
+  const cleanPrompt = prompt.replace(/[^\w\s\u00C0-\u017F]/gi, '').substring(0, 50); 
   const invKey = inventory.sort().join(',');
-  return `${theme}|${history}|${prompt}|roll:${roll ?? 'safe'}|inv:${invKey}|used:${usedItem ?? 'none'}|hp:${hp}`;
+  return `${theme}|${history}|${cleanPrompt}|roll:${roll ?? 'safe'}|inv:${invKey}|used:${usedItem ?? 'none'}|hp:${hp}`;
 };
 
 export const generateStoryNode = async (params: any) => {
   const { prompt, theme, history, inventory, roll, usedItem, currentHealth } = params;
+
+  if (!prompt || typeof prompt !== 'string' || prompt.length > 500) {
+    throw new Error("Prompt invalide ou trop long.");
+  }
+
   const cacheKey = generateCacheKey(theme, history, prompt, roll, inventory, usedItem, currentHealth);
 
   // 1. Vérification Cache SQLite Partagé
@@ -59,21 +75,22 @@ export const generateStoryNode = async (params: any) => {
   }
 
   // 2. Génération IA
-  console.log(`🤖 Génération IA pour: ${prompt}`);
   const context = `
-    Thème: ${theme}. PV actuels: ${currentHealth}/3.
-    Historique: ${history}. Inventaire: [${inventory.join(', ')}].
-    Action: ${prompt}.
-    ${usedItem ? `OBJET UTILISÉ : ${usedItem}. SUCCÈS GARANTI.` : ""}
-    ${roll && !usedItem ? ` [RÉSULTAT DU JET : ${roll}/5]` : ""}
+  Thème: ${theme}. PV actuels: ${currentHealth}/3.
+  Historique: ${history}. Inventaire: [${inventory.join(', ')}].
+  Action: ${prompt}.
+  ${usedItem ? `OBJET UTILISÉ : ${usedItem}. SUCCÈS GARANTI.` : ""}
+  ${roll && !usedItem ? ` [RÉSULTAT DU JET : ${roll}/5]` : ""}
   `;
-
+  
+    console.log(`🤖 Génération IA Text pour: ${prompt}`);
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-2.5-flash-lite",
       contents: context,
       config: {
         systemInstruction: SYSTEM_INSTRUCTION,
         responseMimeType: "application/json",
+        safetySettings: safetySettings,
         responseSchema: {
           type: Type.OBJECT,
           properties: {
@@ -111,19 +128,17 @@ export const generateStoryNode = async (params: any) => {
 };
 
 export const generateImage = async (prompt: string): Promise<string | null> => {
+  if (!prompt || typeof prompt !== 'string' || prompt.length > 1000) return null;
+
   // 1. Vérification du cache
   const cachedImage = await getImageFromDB(prompt);
   if (cachedImage) {
-     console.log(`🎨 Cache Hit (Image)`);
      return cachedImage;
   }
 
-  console.log(`🎨 Génération Image pour : "${prompt.substring(0, 30)}..."`);
-
   try {
+    console.log(`🎨 Génération IA Image pour le prompt: ${prompt}`);
     // 2. Appel à l'API Gemini pour l'image
-    // Note: Au moment où je te parle, le modèle spécifique "image" s'utilise souvent via generateContent 
-    // ou via les endpoints Imagen. J'adapte ici pour le SDK GenAI standard.
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash-image", // Ton modèle cible
       contents: { parts: [{ text: prompt }] },
@@ -144,6 +159,7 @@ export const generateImage = async (prompt: string): Promise<string | null> => {
     const part = candidates[0].content?.parts?.find(p => p.inlineData);
     if (!part || !part.inlineData || !part.inlineData.data) {
         console.warn("⚠️ Pas de données image reçues de l'API");
+        console.log(JSON.stringify(response, null, 2));
         return null;
     }
 
@@ -167,8 +183,6 @@ export const generateImage = async (prompt: string): Promise<string | null> => {
     // Reconversion en base64 optimisé
     const finalImageString = `data:image/jpeg;base64,${compressedBuffer.toString('base64')}`;
 
-    console.log(`💾 Image compressée et sauvegardée (${Math.round(compressedBuffer.length / 1024)}kb)`);
-
     // 5. Sauvegarde en DB
     await saveImageToDB(prompt, finalImageString);
     
@@ -176,6 +190,6 @@ export const generateImage = async (prompt: string): Promise<string | null> => {
 
   } catch (error) {
     console.error("❌ Erreur génération image:", error);
-    return null; // Retourne null pour afficher un placeholder côté client
+    return null;
   }
 };
