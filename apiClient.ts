@@ -5,7 +5,7 @@ import { StoryNode } from './types';
 // - Si on est en PROD (Docker), import.meta.env.PROD est true. On tape sur "/api" (même port).
 // - Si on est en DEV (npm run dev), on tape sur le port 3001.
 const BASE_URL = import.meta.env.PROD 
-  ? '/api' 
+  ? '/pixel-quest/api' 
   : 'http://localhost:3001/api';
 
 export const fetchStoryNode = async (
