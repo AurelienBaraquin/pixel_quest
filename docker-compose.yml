@@ -1,0 +1,9 @@
+services:
+  pixelquest:
+    container_name: pixelquest-server
+    build: .
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./server/.env
+    restart: unless-stopped
