@@ -1,12 +1,7 @@
 // frontend/src/apiClient.ts
 import { StoryNode } from './types';
 
-// Logique intelligente :
-// - Si on est en PROD (Docker), import.meta.env.PROD est true. On tape sur "/api" (même port).
-// - Si on est en DEV (npm run dev), on tape sur le port 3001.
-const BASE_URL = import.meta.env.PROD 
-  ? '/pixel-quest/api' 
-  : 'http://localhost:3001/api';
+const BASE_URL = `${import.meta.env.BASE_URL}api`; 
 
 export const fetchStoryNode = async (
   prompt: string,

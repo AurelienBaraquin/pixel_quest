@@ -7,6 +7,7 @@ import { initDB } from './database';
 import { generateStoryNode, generateImage } from './aiService';
 
 const app = express();
+
 // En Prod (Docker), le port est 3000. En dev local, on peut garder 3001.
 const PORT = process.env.PORT || 3001;
 
@@ -41,12 +42,14 @@ const imageLimiter = rateLimit({
 });
 
 // --- API ROUTES ---
-app.get('/api/ping', (req, res) => {
+const apiRouter = express.Router();
+
+apiRouter.get('/ping', (req, res) => {
   console.log("🔔 Ping reçu !");
   res.send('PONG');
 });
 
-app.post('/api/story', storyLimiter, async (req, res) => {
+apiRouter.post('/story', storyLimiter, async (req, res) => {
   try {
     const result = await generateStoryNode(req.body);
     res.json(result);
@@ -56,7 +59,7 @@ app.post('/api/story', storyLimiter, async (req, res) => {
   }
 });
 
-app.post('/api/image', imageLimiter, async (req, res) => {
+apiRouter.post('/image', imageLimiter, async (req, res) => {
   try {
     const { prompt } = req.body;
     const imageUrl = await generateImage(prompt);
@@ -68,17 +71,17 @@ app.post('/api/image', imageLimiter, async (req, res) => {
   }
 });
 
-// --- SERVIR LE FRONTEND (PARTIE CRUCIALE) ---
 
-// 1. Servir les fichiers statiques (JS, CSS, Images) depuis le dossier 'public'
-// (Docker copiera le build Vite dans ce dossier 'public')
+
+// --- SERVIR LE FRONTEND (PARTIE CRUCIALE) ---
+app.use('/pixel-quest/api', apiRouter);
 app.use('/pixel-quest', express.static(path.join(__dirname, 'public')));
 
-// 2. "Catch-All" : Si la requête n'est pas une API (/api/...), renvoyer index.html
-// C'est ce qui permet à React Router de marcher.
 app.get(/\/pixel-quest\/.*/, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
+
+
 
 // --- DÉMARRAGE ---
 app.listen(PORT, '0.0.0.0', () => {
