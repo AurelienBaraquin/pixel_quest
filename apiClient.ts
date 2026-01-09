@@ -1,7 +1,12 @@
 // frontend/src/apiClient.ts
 import { StoryNode } from './types';
 
-const API_URL = "http://127.0.0.1:3001/api";
+// Logique intelligente :
+// - Si on est en PROD (Docker), import.meta.env.PROD est true. On tape sur "/api" (même port).
+// - Si on est en DEV (npm run dev), on tape sur le port 3001.
+const BASE_URL = import.meta.env.PROD 
+  ? '/api' 
+  : 'http://localhost:3001/api';
 
 export const fetchStoryNode = async (
   prompt: string,
@@ -13,7 +18,7 @@ export const fetchStoryNode = async (
   currentHealth: number = 3
 ): Promise<{ node: StoryNode; fromCache: boolean }> => {
   
-  const response = await fetch(`${API_URL}/story`, {
+  const response = await fetch(`${BASE_URL}/story`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -26,7 +31,7 @@ export const fetchStoryNode = async (
 };
 
 export const generateSceneImage = async (prompt: string): Promise<string | null> => {
-  const response = await fetch(`${API_URL}/image`, {
+  const response = await fetch(`${BASE_URL}/image`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ prompt })

@@ -70,7 +70,6 @@ export const generateStoryNode = async (params: any) => {
   // 1. Vérification Cache SQLite Partagé
   const cached = await getSceneFromDB(cacheKey);
   if (cached) {
-    console.log(`⚡ Cache Hit (Scene): ${prompt.substring(0, 20)}...`);
     return { node: cached, fromCache: true };
   }
 
@@ -82,8 +81,7 @@ export const generateStoryNode = async (params: any) => {
   ${usedItem ? `OBJET UTILISÉ : ${usedItem}. SUCCÈS GARANTI.` : ""}
   ${roll && !usedItem ? ` [RÉSULTAT DU JET : ${roll}/5]` : ""}
   `;
-  
-    console.log(`🤖 Génération IA Text pour: ${prompt}`);
+
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash-lite",
       contents: context,
@@ -137,7 +135,6 @@ export const generateImage = async (prompt: string): Promise<string | null> => {
   }
 
   try {
-    console.log(`🎨 Génération IA Image pour le prompt: ${prompt}`);
     // 2. Appel à l'API Gemini pour l'image
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash-image", // Ton modèle cible

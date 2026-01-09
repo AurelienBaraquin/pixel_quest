@@ -1,0 +1,91 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+body {
+    font-family: 'VT323', monospace;
+    background-color: #1a1a1a;
+    color: #33ff33;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.crt-overlay {
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+    background-size: 100% 2px, 3px 100%;
+    pointer-events: none;
+    z-index: 50;
+}
+
+.scanline {
+    width: 100%;
+    height: 100px;
+    z-index: 51;
+    background: linear-gradient(0deg, rgba(0, 0, 0, 0) 0%, rgba(255, 255, 255, 0.1) 10%, rgba(0, 0, 0, 0.1) 100%);
+    opacity: 0.1;
+    position: absolute;
+    bottom: 100%;
+    animation: scanline 10s linear infinite;
+}
+
+@keyframes scanline {
+    0% { bottom: 100%; }
+    100% { bottom: -100px; }
+}
+
+@keyframes shake {
+    0% { transform: translate(1px, 1px) rotate(0deg); }
+    10% { transform: translate(-1px, -2px) rotate(-1deg); }
+    20% { transform: translate(-3px, 0px) rotate(1deg); }
+    30% { transform: translate(3px, 2px) rotate(0deg); }
+    40% { transform: translate(1px, -1px) rotate(1deg); }
+    50% { transform: translate(-1px, 2px) rotate(-1deg); }
+    60% { transform: translate(-3px, 1px) rotate(0deg); }
+    70% { transform: translate(3px, 1px) rotate(-1deg); }
+    80% { transform: translate(-1px, -1px) rotate(1deg); }
+    90% { transform: translate(1px, 2px) rotate(0deg); }
+    100% { transform: translate(1px, -2px) rotate(-1deg); }
+}
+
+@keyframes select-flash {
+    0% { background-color: #33ff33; color: black; }
+    100% { background-color: transparent; }
+}
+
+@keyframes item-use-flash {
+    0% { background-color: rgba(255, 255, 255, 0.8); opacity: 1; }
+    100% { background-color: transparent; opacity: 0; }
+}
+
+@keyframes inventory-item-glow {
+    0% { box-shadow: 0 0 0px #fbbf24; background-color: #1a1a1a; }
+    50% { box-shadow: 0 0 15px #fbbf24; background-color: #fbbf24; color: #000; }
+    100% { box-shadow: 0 0 0px #fbbf24; background-color: #1a1a1a; }
+}
+
+@keyframes pulse-red {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(0.9); filter: drop-shadow(0 0 5px red); }
+}
+
+.animate-shake { animation: shake 0.5s infinite; }
+.animate-select-flash { animation: select-flash 0.3s ease-out forwards; }
+.animate-item-flash { animation: item-use-flash 0.6s ease-out forwards; }
+.animate-inventory-glow { animation: inventory-item-glow 0.8s ease-in-out infinite; }
+.animate-heart-pulse { animation: pulse-red 1s ease-in-out infinite; }
+
+.unsafe-glow {
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.2);
+    border-color: rgba(239, 68, 68, 0.4) !important;
+}
+
+.unsafe-glow:hover {
+    box-shadow: 0 0 15px rgba(255, 0, 0, 0.4);
+    border-color: rgba(239, 68, 68, 0.8) !important;
+}
+
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: #1a1a1a; }
+::-webkit-scrollbar-thumb { background: #33ff33; border-radius: 4px; }
