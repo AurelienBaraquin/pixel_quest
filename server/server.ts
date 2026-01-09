@@ -11,6 +11,8 @@ const app = express();
 // En Prod (Docker), le port est 3000. En dev local, on peut garder 3001.
 const PORT = process.env.PORT || 3001;
 
+app.set('trust proxy', 1);
+
 // Configuration de la sécurité (Autorise les images et scripts nécessaires)
 app.use(
   helmet({
