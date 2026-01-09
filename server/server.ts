@@ -72,11 +72,11 @@ app.post('/api/image', imageLimiter, async (req, res) => {
 
 // 1. Servir les fichiers statiques (JS, CSS, Images) depuis le dossier 'public'
 // (Docker copiera le build Vite dans ce dossier 'public')
-app.use(express.static(path.join(__dirname, 'public')));
+app.use('/pixel-quest', express.static(path.join(__dirname, 'public')));
 
 // 2. "Catch-All" : Si la requête n'est pas une API (/api/...), renvoyer index.html
 // C'est ce qui permet à React Router de marcher.
-app.get(/.*/, (req, res) => {
+app.get(/\/pixel-quest\/.*/, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
