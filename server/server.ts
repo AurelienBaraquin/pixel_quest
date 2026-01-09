@@ -13,16 +13,8 @@ const PORT = process.env.PORT || 3001;
 // Configuration de la sécurité (Autorise les images et scripts nécessaires)
 app.use(
   helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com"],
-        imgSrc: ["'self'", "data:", "https:", "blob:"],
-        connectSrc: ["'self'", "http://localhost:3000", "http://localhost:3001", "https://generativelanguage.googleapis.com"],
-        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-        fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      },
-    },
+    contentSecurityPolicy: false,
+    strictTransportSecurity: false
   })
 );
 
