@@ -1,36 +1,22 @@
-# Construction du Frontend (Vite)
-FROM node:20-alpine AS frontend-builder
-WORKDIR /app-front
-
+# syntax=docker/dockerfile:1
+# ---- Front (Vite) ----
+FROM node:24-alpine AS frontend
+WORKDIR /app
 COPY package*.json ./
-RUN npm install
-
+# Le lockfile du front est désynchronisé (tailwind 3 vs 4) : npm install tant qu'il n'est pas régénéré.
+RUN --mount=type=cache,target=/root/.npm npm install --no-audit --no-fund
 COPY . .
-
 RUN npm run build
 
-
-
-# Construction du Backend (Serveur)
-FROM node:20-alpine
+# ---- Serveur (Express + tsx) ----
+FROM node:24-alpine
 WORKDIR /app
-
+ENV NODE_ENV=production PORT=3000
 COPY server/package*.json ./
-
-RUN npm install
-
+# tsx (devDependency) sert aussi au runtime : install complète.
+RUN --mount=type=cache,target=/root/.npm npm ci --include=dev
 COPY server/ .
-
-
-
-# Fusion (Copie du Front dans le Back)
-
-RUN mkdir -p public
-
-COPY --from=frontend-builder /app-front/dist ./public
-
-ENV PORT=3000
-ENV NODE_ENV=production
+COPY --from=frontend /app/dist ./public
+USER node
 EXPOSE 3000
-
-CMD ["npx", "tsx", "server.ts"]
+CMD ["node", "--import", "tsx", "server.ts"]
